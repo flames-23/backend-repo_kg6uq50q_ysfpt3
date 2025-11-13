@@ -1,48 +1,29 @@
 """
-Database Schemas
+Database Schemas for Medi-Friend
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model corresponds to a MongoDB collection. The collection name is the lowercase of the class name.
 """
-
 from pydantic import BaseModel, Field
-from typing import Optional
-
-# Example schemas (replace with your own):
+from typing import Optional, Literal
+from datetime import datetime
 
 class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
     name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    email: str = Field(..., description="Unique email address")
+    password_hash: str = Field(..., description="Hashed password (server-side only)")
+    notifications_enabled: bool = Field(True, description="Whether user allows notifications")
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+class Session(BaseModel):
+    user_id: str = Field(..., description="User ID this session belongs to")
+    token: str = Field(..., description="Opaque session token")
+    expires_at: datetime = Field(..., description="UTC expiration time")
 
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class Medication(BaseModel):
+    user_id: str = Field(..., description="Owner user ID")
+    name: str = Field(..., description="Medicine name")
+    dosage: str = Field(..., description="Dosage e.g., 1 tablet, 2ml")
+    time_12h: str = Field(..., description="Time in 12-hour format, e.g., 08:30 PM")
+    frequency: Literal['daily','alternate','weekly'] = Field('daily', description="Reminder frequency")
+    last_taken_at: Optional[datetime] = Field(None, description="UTC timestamp of last time taken")
+    snooze_until_utc: Optional[datetime] = Field(None, description="UTC timestamp until which reminder is snoozed")
+    notes: Optional[str] = Field(None, description="Additional notes")
